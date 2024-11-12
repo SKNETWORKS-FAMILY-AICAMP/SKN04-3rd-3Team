@@ -25,12 +25,12 @@ def load_pdfs(folder_path):
     return documents
 
 def build_vector_store():
-    folder_path = './pdfs'
+    folder_path = './data'
     documents = load_pdfs(folder_path)
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,  # 각 청크의 최대 길이
-        chunk_overlap=200,  # 청크 간 중복 문자 수
+        chunk_size=1024,  # 각 청크의 최대 길이
+        chunk_overlap=256,  # 청크 간 중복 문자 수
         separators=["\n\n", "\n", " ", ""]
     )
 

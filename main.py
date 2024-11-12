@@ -66,8 +66,12 @@ else:
     source = file_mapping.get(selected_insurance)
 
 if user_input :=st.chat_input('메세지를 입력해주세요.'):
-    st.chat_message('user', avatar='https://media.discordapp.net/attachments/1304270859543773235/1305737598550933514/image0.jpg?ex=67341e66&is=6732cce6&hm=bbaba36f0b1e25ff00f86c81c4b4a5f9424246e6d5293fdccf388b9cf0b87bea&=&format=webp&width=582&height=542').write(f'{user_input}')
-    st.session_state['messages'].append(ChatMessage(role="user", content=user_input))
+    user_avatar = 'https://media.discordapp.net/attachments/1304270859543773235/1305737598550933514/image0.jpg?ex=67341e66&is=6732cce6&hm=bbaba36f0b1e25ff00f86c81c4b4a5f9424246e6d5293fdccf388b9cf0b87bea&=&format=webp&width=582&height=542'
+    st.chat_message('user', avatar=user_avatar).write(f'{user_input}')
+    st.session_state['messages'].append({
+        "message" : ChatMessage(role="user", content=user_input),
+        "avatar" : user_avatar
+        })
 
     model = ChatOpenAI(model='gpt-4o-mini', temperature=0.1)
     prompt = ChatPromptTemplate.from_messages([
@@ -120,10 +124,15 @@ if user_input :=st.chat_input('메세지를 입력해주세요.'):
         config={"configurable": {"session_id": "abc123"}}
     )
 
-    with st.chat_message('assistant', avatar="https://images-ext-1.discordapp.net/external/3g0sXbzVpODdQnppiIhtfQzzojtIgRMsLp00kLCyXNg/https/img.freepik.com/premium-photo/3d-style-chat-bot-robot-ai-app-icon-isolated-white-background-generative-ai_159242-25937.jpg?format=webp&width=782&height=588"):
+    ai_avatar = "https://images-ext-1.discordapp.net/external/3g0sXbzVpODdQnppiIhtfQzzojtIgRMsLp00kLCyXNg/https/img.freepik.com/premium-photo/3d-style-chat-bot-robot-ai-app-icon-isolated-white-background-generative-ai_159242-25937.jpg?format=webp&width=782&height=588"
+    with st.chat_message('assistant', avatar=ai_avatar):
         output = answer.content
         st.write(output)
-        st.session_state['messages'].append(ChatMessage(role="assistant", content=output))
+        st.session_state['messages'].append({
+            "message" : ChatMessage(role="assistant", content=output),
+            "avatar" : ai_avatar
+        })
+
 
 
 

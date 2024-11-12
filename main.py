@@ -38,7 +38,7 @@ chat_placeholder = st.empty()
 with chat_placeholder.container():
     for message in st.session_state.chat_messages.messages:
         role = "사용자" if message["role"] == "user" else "AI"
-        st.write_stream(f"{role}: {message['content']}")
+        st.write(f"{role}: {message['content']}")
 
 retriever = chroma_db.as_retriever(search_kwargs={'k': 5})
 
@@ -79,10 +79,6 @@ chain = (
     | prompt
     | model
     | parser
-)
-
-answer = chain.invoke(
-    {'question': 'ChatGPT에 대해 무엇을 말해줄 수 있나요?', 'language': 'KOREAN'}
 )
 
 # 응답 생성 함수

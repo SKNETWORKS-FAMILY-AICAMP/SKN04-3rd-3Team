@@ -9,7 +9,7 @@ from langchain_community.vectorstores import Chroma
 
 # 문서 로더 및 텍스트 전처리
 loader = PyPDFium2Loader(
-    './data/DB_해외여행보험_약관.pdf',
+    './data/현대해상_20220101_해외여행보험_약관.pdf',
     )
 documents = loader.load()  # PDF 로드
 

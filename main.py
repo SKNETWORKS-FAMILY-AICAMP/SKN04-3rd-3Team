@@ -7,6 +7,7 @@ from langchain_core.messages import ChatMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.prompts import load_prompt
 
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -41,15 +42,15 @@ def get_session_history(session_ids: str) -> BaseChatMessageHistory:
         st.session_state["store"][session_ids] = ChatMessageHistory()
     return st.session_state["store"][session_ids]
 
-insurence = ['보험약관', 'DB', '롯데', '삼성화재', '캐롯', '하나', '현대해상']
+insurence = ['전체', 'DB', '롯데', '삼성화재', '캐롯', '하나', '현대해상']
 
 file_mapping = create_insurance_file_mapping(insurence)
 selected_insurance = st.sidebar.selectbox(
-    '보험약관',
+    '보험 회사',
     insurence
 )
 
-if selected_insurance == '보험약관':
+if selected_insurance == '전체':
     retriever = chroma_db.as_retriever(
         search_kwargs={'k': 4}
     )
@@ -73,8 +74,9 @@ if user_input :=st.chat_input('메세지를 입력해주세요.'):
         (
             "system", 
             '''
-            당신은 보험 전문가입니다.
-            다음 context를 바탕으로 답변해주세요: 
+            당신은 20년차 여행보험전무 AI 어시스턴트 입니다. 사용자의 요청사항에 따라 적절한 답변을 작성해 주세요.
+            context내용을 참고하여 작성해 주세요. 
+            관련 자료가 context에 없는 경우 반드시 자료가 없다고 출력해줘
             {context}
             '''
         ),
@@ -85,11 +87,15 @@ if user_input :=st.chat_input('메세지를 입력해주세요.'):
             "system",
             """
             답변은 한국어로 작성하고, 친절하고 전문적으로 설명해주세요.
-            출처를 물어볼경우 {source} 를 알려줘
+            출처는 무조건
+            출처: {source}
+            이 양식으로 알려줘
             """
         )
         ])
-    
+    # prompt = load_prompt("./prompts/insurance.yaml", encoding="utf8")
+    # print('prompt', prompt)
+        
     chain = (
         {
             'context': itemgetter('question')

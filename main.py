@@ -57,7 +57,7 @@ retriever = chroma_db.as_retriever(
     )
 
 if user_input :=st.chat_input('메세지를 입력해주세요.'):
-    user_avatar = 'https://media.discordapp.net/attachments/1304270859543773235/1305737598550933514/image0.jpg?ex=67341e66&is=6732cce6&hm=bbaba36f0b1e25ff00f86c81c4b4a5f9424246e6d5293fdccf388b9cf0b87bea&=&format=webp&width=582&height=542'
+    user_avatar = './image/user.jpg'
     st.chat_message('user', avatar=user_avatar).write(f'{user_input}')
     st.session_state['messages'].append({
         "message" : ChatMessage(role="user", content=user_input),

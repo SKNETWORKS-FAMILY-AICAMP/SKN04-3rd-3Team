@@ -11,7 +11,7 @@
 
 |  &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp; 🐶 박화랑  &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp;    |      &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp; 🐙고유림  &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp;    |      &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp; 🐻김문수  &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp;    |     &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp; 😺신원영  &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp;   |  &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;  &nbsp;  &nbsp; 🐶오창준  &nbsp;&nbsp; &nbsp;&nbsp; &nbsp;  &nbsp;  &nbsp;    |
 |------------------------------------------|--------------------------------------|------------------------------------------|-----------------------------------|------------------------------------------|
-| **streamlit** | **README, 아키텍처** | **RAG, schema** | **RAG(prompt), vector DB** | **PDF 벡터화, README 초안 작성** | 
+| **팀장, streamlit, RAG** | **README, 아키텍처 디자인 및 문서작업** | **RAG(prompt 설계), 아키텍처 설계** | **RAG(prompt 설계), vector DB(함수화)** | **PDF 벡터화, 기획** | 
 
 <br>
 <br>

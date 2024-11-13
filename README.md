@@ -187,3 +187,7 @@ GPT-4o-mini 기반 **보험 약관 RAG 챗봇**입니다. 보험사의 내부 �
 
 <img src="https://cdn.discordapp.com/attachments/1271398698596696117/1306148317075607573/image.png?ex=67359ce9&is=67344b69&hm=9948c91cb42202fcc932572237ba3965db09ffb8359d2758255dd4bb804c6aae&">
 
+<br> 폴더트리 <br>
+
+<img src="tree.png">
+

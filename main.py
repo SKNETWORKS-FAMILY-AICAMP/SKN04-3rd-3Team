@@ -1,5 +1,5 @@
 from vector_db import initialize_vector_store
-from utils import print_messages, create_insurance_file_mapping
+from utils import print_messages, format_docs
 
 import streamlit as st
 from langchain_openai import ChatOpenAI
@@ -7,7 +7,6 @@ from langchain_core.messages import ChatMessage
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_core.prompts import load_prompt
 
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -15,17 +14,22 @@ from langchain_core.prompts import (
 )
 from dotenv import load_dotenv
 from operator import itemgetter
+import yaml
 
 
 load_dotenv()
 chroma_db = initialize_vector_store()
 
+# YAML 파일에서 프롬프트 불러오기
+with open('prompts.yaml', 'r', encoding='utf-8') as file:
+    prompts = yaml.safe_load(file)
+
 st.set_page_config(
-    page_title='보험왕이 되고 싶어',
+    page_title='보험왕이 될꺼야!!!',
     page_icon="🦈",
 )
 
-st.title("LangChain + Streamlit 앱")
+st.title("🦈 보험왕이 될꺼야!!!")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
@@ -42,28 +46,10 @@ def get_session_history(session_ids: str) -> BaseChatMessageHistory:
         st.session_state["store"][session_ids] = ChatMessageHistory()
     return st.session_state["store"][session_ids]
 
-insurence = ['전체', 'DB', '롯데', '삼성화재', '캐롯', '하나', '현대해상']
-
-file_mapping = create_insurance_file_mapping(insurence)
-selected_insurance = st.sidebar.selectbox(
-    '보험 회사',
-    insurence
-)
-
-if selected_insurance == '전체':
-    retriever = chroma_db.as_retriever(
-        search_kwargs={'k': 4}
+retriever = chroma_db.as_retriever(
+        search_type="mmr",
+        search_kwargs={'k': 6}
     )
-    source = '전체'
-else:
-    pdf_path = f'./data/{file_mapping.get(selected_insurance)}.pdf'
-    retriever = chroma_db.as_retriever(
-        search_kwargs={
-            'k': 4,
-            'filter': {'source': {'$eq': pdf_path}}
-        }
-    )
-    source = file_mapping.get(selected_insurance)
 
 if user_input :=st.chat_input('메세지를 입력해주세요.'):
     user_avatar = 'https://media.discordapp.net/attachments/1304270859543773235/1305737598550933514/image0.jpg?ex=67341e66&is=6732cce6&hm=bbaba36f0b1e25ff00f86c81c4b4a5f9424246e6d5293fdccf388b9cf0b87bea&=&format=webp&width=582&height=542'
@@ -75,38 +61,29 @@ if user_input :=st.chat_input('메세지를 입력해주세요.'):
 
     model = ChatOpenAI(model='gpt-4o-mini', temperature=0.1)
     prompt = ChatPromptTemplate.from_messages([
-        (
-            "system", 
-            '''
-            당신은 20년차 여행보험전무 AI 어시스턴트 입니다. 사용자의 요청사항에 따라 적절한 답변을 작성해 주세요.
-            context내용을 참고하여 작성해 주세요. 
-            관련 자료가 context에 없는 경우 반드시 자료가 없다고 출력해줘
-            {context}
-            '''
-        ),
+        ("system", prompts['system_prompt_1']),
+        ('human', prompts['human_prompt_1']),
+        ("system", prompts['ai_prompt_1']),
+        ("system", prompts['system_prompt_2']),
+        ('human', prompts['human_prompt_2']),
+        ("system", prompts['ai_prompt_2']),
+        ("system", prompts['system_prompt_3']),
+        ('human', prompts['human_prompt_3']),
+        ("system", prompts['ai_prompt_3']),
+        ("system", prompts['system_prompt_4']),
+        ('human', prompts['human_prompt_4']),
+        ("system", prompts['ai_prompt_4']),
         MessagesPlaceholder(variable_name='history'),
         (
             'human', " 사용자 질문:{question}"),
-        (
-            "system",
-            """
-            답변은 한국어로 작성하고, 친절하고 전문적으로 설명해주세요.
-            출처는 무조건
-            출처: {source}
-            이 양식으로 알려줘
-            """
-        )
+        
         ])
-    # prompt = load_prompt("./prompts/insurance.yaml", encoding="utf8")
-    # print('prompt', prompt)
         
     chain = (
         {
-            'context': itemgetter('question')
-            | retriever,
+            'context': itemgetter('question') | retriever | format_docs,
             'question': itemgetter('question'),
             'history': itemgetter('history'),
-            "source": lambda _: source
         }
         | prompt
         | model

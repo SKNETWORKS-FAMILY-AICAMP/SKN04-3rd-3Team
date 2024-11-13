@@ -17,4 +17,6 @@ def format_docs(docs):
         source = os.path.splitext(os.path.basename(doc.metadata['source']))[0]
         page = doc.metadata['page']
         formatted_results.append(f"내용: {content}\n출처: {source}\n페이지: {page}\n")
-    return "\n".join(formatted_results)
+        result = "\n".join(formatted_results)
+        print(result)
+        return result

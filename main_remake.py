@@ -1,68 +1,24 @@
-# from chroma import chroma_db, documents
-from utils import print_messages
-from vector_db import initialize_vector_store, create_insurance_file_mapping
+from vector_db import initialize_vector_store
+from utils import print_messages, create_insurance_file_mapping,format_docs
+
 import streamlit as st
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
 from langchain_core.messages import ChatMessage
-from langchain_community.chat_message_histories import StreamlitChatMessageHistory
-from langchain_core.output_parsers import StrOutputParser
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.chat_history import BaseChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_core.prompts import load_prompt
 
-from langchain_community.document_transformers import LongContextReorder
-from langchain.memory import ConversationBufferWindowMemory
-
-from langchain_core.runnables import RunnableLambda
 from langchain_core.prompts import (
-    PromptTemplate,
     ChatPromptTemplate,
     MessagesPlaceholder,
 )
 from dotenv import load_dotenv
 from operator import itemgetter
+
+
 load_dotenv()
-
-# ChatGPT 모델 초기화 (gpt-4o-mini 모델, temperature=0.3으로 설정하여 일관된 응답 생성)
-model = ChatOpenAI(model='gpt-4o-mini', temperature=0.3)
-
-# 벡터 데이터베이스 초기화 (문서 임베딩을 저장하고 검색하기 위한 Chroma DB)
 chroma_db = initialize_vector_store()
-
-# 문맥 대화를 위한 메모리 설정
-memory = ConversationBufferWindowMemory(
-    k=5,  # 최근 5개의 대화만 유지
-    memory_key='chat_history',
-    output_key='answer',
-    return_messages=True
-)
-
-# 응답 생성 함수
-def generate_response(input_text):
-    docs = retriever.invoke(input_text)
-    context = "\n".join(doc.page_content for doc in docs)
-    
-    # 메모리에서 대화 기록 가져오기
-    chat_history = memory.load_memory_variables({})['chat_history']
-    
-    prompt = ChatPromptTemplate.from_template(template)
-    parser = StrOutputParser()
-    # chain 구성 수정
-    chain = prompt | model | parser
-    # 입력 데이터 구성
-    input_data = {
-        "context": context,
-        "chat_history": chat_history,
-        "question": input_text,
-        "source": file_mapping.get(selected_insurance),
-    }
-    answer = chain.invoke(input_data)
-    
-    # 메모리에 대화 저장
-    memory.save_context(
-        {"input": input_text},
-        {"answer": answer}
-    )
-    
-    return answer
 
 st.set_page_config(
     page_title='보험왕이 되고 싶어',
@@ -71,104 +27,117 @@ st.set_page_config(
 
 st.title("LangChain + Streamlit 앱")
 
-
-# 채팅 기록 초기화 (세션 상태에 저장)
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
-
-print_messages()
 
 if "store" not in st.session_state:
     st.session_state["store"] = dict()
 
-insurence = ['보험약관', 'DB', '롯데', '삼성화재', '캐롯', '하나', '현대해상']
-# 사용 예시
+
+print_messages()
+
+def get_session_history(session_ids: str) -> BaseChatMessageHistory:
+    print(session_ids)
+    if session_ids not in st.session_state["store"]:
+        st.session_state["store"][session_ids] = ChatMessageHistory()
+    return st.session_state["store"][session_ids]
+
+insurence = ['전체', 'DB', '롯데', '삼성화재', '캐롯', '하나', '현대해상']
+
 file_mapping = create_insurance_file_mapping(insurence)
 selected_insurance = st.sidebar.selectbox(
-    '보험약관',
+    '보험 회사',
     insurence
 )
 
-# 선택된 보험에 따라 retriever 설정
-if selected_insurance == '보험약관':
+if selected_insurance == '전체':
     retriever = chroma_db.as_retriever(
-        search_kwargs={'k': 4}
+        search_type='mmr',
+        search_kwargs={'k': 7}
     )
+    source = '전체'
 else:
     pdf_path = f'./data/{file_mapping.get(selected_insurance)}.pdf'
     retriever = chroma_db.as_retriever(
+        search_type='mmr',
         search_kwargs={
-            'k': 4,
+            'k': 10,
             'filter': {'source': {'$eq': pdf_path}}
         }
     )
-
-template = template = '''
-당신은 보험 전문가입니다.
-다음 컨텍스트를 바탕으로 답변해주세요:
-{context}
-
-이전 대화 기록:
-{chat_history}
-
-사용자 질문:
-{question}
-
-답변은 한국어로 작성하고, 친절하고 전문적으로 설명해주세요.
-출처를 물어볼경우 {source} 를 알려줘
-'''
-
-# chat_placeholder = st.empty()
-# with chat_placeholder.container():
-#     for message in st.session_state.chat_messages.messages:
-#         role = "사용자" if message["role"] == "user" else "AI"
-#         st.write(f"{role}: {message['content']}")
-
-# retriever = chroma_db.as_retriever(search_kwargs={'k': 4})
-
-# reordering = LongContextReorder()
-# documents_reordered = reordering.transform_documents(documents)
-
-# ###################################
-
-# def reorder_documents(documents):
-#     reordering = LongContextReorder()
-#     reordered_documents = reordering.transform_documents(documents)
-#     documents_joined = '\n'.join([docs.page_content for docs in reordered_documents])
-
-#     return documents_joined
-
-
-# # 사용자 입력 받기
-# user_input = st.text_input("질문을 입력하세요:")
-# if st.button('메세지 전송'):
-#     # 사용자 메시지 저장
-#     st.session_state.chat_messages.messages.append({"role": "user", "content": user_input})
-    
-#     # AI 응답 생성 및 저장
-#     try:
-#         # 주요 코드
-#         response = generate_response(user_input)
-#         st.session_state.chat_messages.messages.append({"role": "assistant", "content": response})
-
-#     except Exception as e:
-#         st.error(f"Error: {e}")
+    source = file_mapping.get(selected_insurance)
 
 if user_input :=st.chat_input('메세지를 입력해주세요.'):
-    
-    st.chat_message('user').write(f'{user_input}')
-    #st.session_state['messages'].append(("user", user_input))
-    st.session_state['messages'].append(ChatMessage(role="user", content=user_input))
+    user_avatar = 'https://media.discordapp.net/attachments/1304270859543773235/1305737598550933514/image0.jpg?ex=67341e66&is=6732cce6&hm=bbaba36f0b1e25ff00f86c81c4b4a5f9424246e6d5293fdccf388b9cf0b87bea&=&format=webp&width=582&height=542'
+    st.chat_message('user', avatar=user_avatar).write(f'{user_input}')
+    st.session_state['messages'].append({
+        "message" : ChatMessage(role="user", content=user_input),
+        "avatar" : user_avatar
+        })
 
-    with st.chat_message('assistant', avatar="https://images-ext-1.discordapp.net/external/3g0sXbzVpODdQnppiIhtfQzzojtIgRMsLp00kLCyXNg/https/img.freepik.com/premium-photo/3d-style-chat-bot-robot-ai-app-icon-isolated-white-background-generative-ai_159242-25937.jpg?format=webp&width=782&height=588"):
+    model = ChatOpenAI(model='gpt-4o-mini', temperature=0.1)
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system", 
+            '''
+            당신은 20년차 여행보험전무 AI 어시스턴트 입니다. 사용자의 요청사항에 따라 적절한 답변을 작성해 주세요.
+            context내용을 참고하여 작성해 주세요. 
+            관련 자료가 context에 없는 경우 반드시 자료가 없다고 출력해줘
+            {context}
+            '''
+        ),
+        MessagesPlaceholder(variable_name='history'),
+        (
+            'human', " 사용자 질문:{question}"),
+        (
+            "system",
+            """
+            답변은 한국어로 작성하고, 친절하고 전문적으로 설명해주세요.
+            출처는 무조건
+            출처: 
+            페이지:
+            이 양식으로 알려줘
+            """
+        )
+        ])
+    # prompt = load_prompt("./prompts/insurance.yaml", encoding="utf8")
+    # print('prompt', prompt)
         
-       #  message = f'당신이 입력한 내용: {user_input}'
-        output = generate_response(user_input)
+    chain = (
+        {
+            'context': itemgetter('question')|retriever| format_docs,
+            'question': itemgetter('question'),
+            'history': itemgetter('history'),
+            "source": lambda _: source
+        }
+        | prompt
+        | model
+    )
+
+    chain_with_memory = RunnableWithMessageHistory(
+        chain,
+        get_session_history,
+        input_messages_key='question',
+        history_messages_key='history'
+    )
+
+    answer = chain_with_memory.invoke(
+        {"question": user_input },
+        config={"configurable": {"session_id": "abc123"}}
+    )
+
+    ai_avatar = "https://images-ext-1.discordapp.net/external/3g0sXbzVpODdQnppiIhtfQzzojtIgRMsLp00kLCyXNg/https/img.freepik.com/premium-photo/3d-style-chat-bot-robot-ai-app-icon-isolated-white-background-generative-ai_159242-25937.jpg?format=webp&width=782&height=588"
+    with st.chat_message('assistant', avatar=ai_avatar):
+        output = answer.content
         st.write(output)
-        st.session_state['messages'].append(ChatMessage(role="assistant", content=output))
+        st.session_state['messages'].append({
+            "message" : ChatMessage(role="assistant", content=output),
+            "avatar" : ai_avatar
+        })
 
 
-    
+
+
     
     
 
